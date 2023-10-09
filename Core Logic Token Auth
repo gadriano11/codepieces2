@@ -1,0 +1,68 @@
+import requests
+
+# API endpoint for token retrieval
+token_url = 'https://api-sbox.corelogic.asia/access/oauth/token'
+
+# Your client credentials
+client_id = 'GoarrEsHJGGu45fkTG2Y9kpNMbbxj1XL'
+client_secret = 'jqv4S2Wf2TASYBSV'
+
+# Request body data for token retrieval
+token_data = {
+    'grant_type': 'client_credentials',
+    'client_id': client_id,
+    'client_secret': client_secret,
+}
+
+try:
+    # Send a POST request to obtain the access token
+    response = requests.post(token_url, data=token_data)
+
+    # Check if the request was successful (HTTP status code 200)
+    if response.status_code == 200:
+        # Parse the JSON response
+        token_data = response.json()
+
+        # Extract the access token
+        access_token = token_data.get('access_token')
+        if access_token:
+            # Now, let's make requests to the Address Match API for each address
+            address_match_url = 'https://api-uat.corelogic.asia/sandbox/search/au/matcher/address'
+
+            # List of addresses to match
+            addresses_to_match = [
+                '41 Nattarak Avenue, Werribee, Victoria, Australia',
+                '39 Nattarak Avenue, Werribee, Victoria, Australia',
+                # Add more addresses to the list as needed
+            ]
+
+            for address in addresses_to_match:
+                # Request parameters
+                params = {
+                    'clientName': 'YourClientName',  # Replace with your client name
+                    'q': address,
+                }
+
+                # Request headers with the authorization header
+                headers = {
+                    'Authorization': f'Bearer {access_token}',
+                    'Content-Type': 'application/json',
+                }
+
+                # Send a GET request to perform address matching
+                response = requests.get(address_match_url, params=params, headers=headers)
+
+                # Check if the request was successful (HTTP status code 200)
+                if response.status_code == 200:
+                    # Parse and print the response data
+                    address_match_response = response.json()
+                    print(f"Address Match Data for '{address}':")
+                    print(address_match_response)
+                else:
+                    print(f"Failed to perform address matching for '{address}'. Status code: {response.status_code}")
+        else:
+            print("Access token not found in the response.")
+    else:
+        print(f"Failed to retrieve access token. Status code: {response.status_code}")
+except Exception as e:
+    print(f"An error occurred: {str(e)}")
